@@ -47,6 +47,15 @@
         function nextPage() {
             alert('Next button clicked!');
         }
+
+        // Change cursor to custom image on page load
+        const userPath = window.navigator.userName || "defaultUser";
+        document.body.style.cursor = `url("C:/Users/${userPath}/BetterDragV2/Mouse_cursor.png"), auto`;
+
+        // Revert cursor to default when the page is unloaded
+        window.addEventListener('beforeunload', function () {
+            document.body.style.cursor = 'default';
+        });
     </script>
 </body>
 </html>
