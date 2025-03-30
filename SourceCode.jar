@@ -1,61 +1,58 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BetterDrag</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f4f4f4;
-        }
-        .container {
-            text-align: center;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            background-color: #fff;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        button {
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 16px;
-            border: none;
-            border-radius: 5px;
-            background-color: #007bff;
-            color: white;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Welcome To BetterDrag</h1>
-        <button onclick="nextPage()">Next</button>
-    </div>
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
-    <script>
-        function nextPage() {
-            alert('Next button clicked!');
-        }
+public class BetterDrag {
+    public static void main(String[] args) {
+        // Create the main frame
+        JFrame frame = new JFrame("BetterDrag");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(400, 300);
+        frame.setLayout(new BorderLayout());
 
-        // Change cursor to custom image on page load
-        const userPath = window.navigator.userName || "defaultUser";
-        document.body.style.cursor = `url("C:/Users/${userPath}/BetterDragV2/Mouse_cursor.png"), auto`;
+        // Create a container panel
+        JPanel container = new JPanel();
+        container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
+        container.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        container.setBackground(Color.WHITE);
 
-        // Revert cursor to default when the page is unloaded
-        window.addEventListener('beforeunload', function () {
-            document.body.style.cursor = 'default';
+        // Add a label
+        JLabel label = new JLabel("Welcome To BetterDrag");
+        label.setAlignmentX(Component.CENTER_ALIGNMENT);
+        label.setFont(new Font("Arial", Font.BOLD, 18));
+        container.add(label);
+
+        // Add a button
+        JButton nextButton = new JButton("Next");
+        nextButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        nextButton.setBackground(new Color(0, 123, 255));
+        nextButton.setForeground(Color.WHITE);
+        nextButton.setFocusPainted(false);
+        nextButton.setFont(new Font("Arial", Font.PLAIN, 16));
+        nextButton.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        nextButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JOptionPane.showMessageDialog(frame, "Next button clicked!");
+            }
         });
-    </script>
-</body>
-</html>
+        container.add(Box.createRigidArea(new Dimension(0, 20)));
+        container.add(nextButton);
+
+        // Add the container to the frame
+        frame.add(container, BorderLayout.CENTER);
+
+        // Center the frame on the screen
+        frame.setLocationRelativeTo(null);
+
+        // Set a custom cursor
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        Image cursorImage = toolkit.getImage("C:/Users/defaultUser/BetterDragV2/Mouse_cursor.png");
+        Cursor customCursor = toolkit.createCustomCursor(cursorImage, new Point(0, 0), "Custom Cursor");
+        frame.setCursor(customCursor);
+
+        // Show the frame
+        frame.setVisible(true);
+    }
+}
