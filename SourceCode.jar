@@ -1,79 +1,67 @@
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class BetterDrag {
+public class Main {
     public static void main(String[] args) {
         // Create the main frame
-        JFrame frame = new JFrame("BetterDrag");
+        JFrame frame = new JFrame("BetterDrag Example");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(400, 300);
-        frame.setLayout(new BorderLayout());
 
-        // Create a container panel
-        JPanel container = new JPanel();
-        container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
-        container.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        container.setBackground(Color.WHITE);
-
-        // Add a label
-        JLabel label = new JLabel("Welcome To BetterDrag");
-        label.setAlignmentX(Component.CENTER_ALIGNMENT);
-        label.setFont(new Font("Arial", Font.BOLD, 18));
-        container.add(label);
-
-        // Add a button
+        // Create a button
         JButton nextButton = new JButton("Next");
-        nextButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        nextButton.setBackground(new Color(0, 123, 255));
-        nextButton.setForeground(Color.WHITE);
-        nextButton.setFocusPainted(false);
-        nextButton.setFont(new Font("Arial", Font.PLAIN, 16));
-        nextButton.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        frame.add(nextButton);
+
+        // Variables to store BetterDrag settings
+        final boolean[] isBetterDragEnabled = {false};
+        final int[] clickCount = {1}; // Default to 1 click
+
+        // Add action listener for the "Next" button
         nextButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JOptionPane.showMessageDialog(frame, "Next button clicked!");
+                // Show a dialog to configure BetterDrag settings
+                JPanel panel = new JPanel();
+                JCheckBox enableBetterDragCheckBox = new JCheckBox("Enable BetterDrag", isBetterDragEnabled[0]);
+                JLabel clickCountLabel = new JLabel("Number of clicks (max 1000):");
+                JTextField clickCountField = new JTextField(String.valueOf(clickCount[0]), 5);
+
+                panel.add(enableBetterDragCheckBox);
+                panel.add(clickCountLabel);
+                panel.add(clickCountField);
+
+                int result = JOptionPane.showConfirmDialog(frame, panel, "Configure BetterDrag", JOptionPane.OK_CANCEL_OPTION);
+
+                if (result == JOptionPane.OK_OPTION) {
+                    // Update BetterDrag settings based on user input
+                    isBetterDragEnabled[0] = enableBetterDragCheckBox.isSelected();
+                    try {
+                        int inputClickCount = Integer.parseInt(clickCountField.getText());
+                        if (inputClickCount > 0 && inputClickCount <= 1000) {
+                            clickCount[0] = inputClickCount;
+                        } else {
+                            JOptionPane.showMessageDialog(frame, "Please enter a valid number between 1 and 1000.", "Invalid Input", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } catch (NumberFormatException ex) {
+                        JOptionPane.showMessageDialog(frame, "Please enter a valid number.", "Invalid Input", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+
+                // Perform the action based on BetterDrag settings
+                if (isBetterDragEnabled[0]) {
+                    for (int i = 0; i < clickCount[0]; i++) {
+                        System.out.println("BetterDrag click " + (i + 1));
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(frame, "Next button clicked!");
+                }
             }
         });
-        container.add(Box.createRigidArea(new Dimension(0, 20)));
-        container.add(nextButton);
 
-        // Add the container to the frame
-        frame.add(container, BorderLayout.CENTER);
-
-        // Center the frame on the screen
-        frame.setLocationRelativeTo(null);
-
-        // Set a custom cursor
-        Toolkit toolkit = Toolkit.getDefaultToolkit();
-        Image cursorImage = toolkit.getImage("C:/Users/defaultUser/BetterDragV2/Mouse_cursor.png");
-        Cursor customCursor = toolkit.createCustomCursor(cursorImage, new Point(0, 0), "Custom Cursor");
-        frame.setCursor(customCursor);
-
-        // Show the frame
+        // Set layout and make the frame visible
+        frame.setLayout(new java.awt.FlowLayout());
         frame.setVisible(true);
     }
 }
-// Add a menu bar
-JMenuBar menuBar = new JMenuBar();
-JMenu optionsMenu = new JMenu("Options");
-JCheckBoxMenuItem enableBetterDrag = new JCheckBoxMenuItem("Enable BetterDrag");
-optionsMenu.add(enableBetterDrag);
-menuBar.add(optionsMenu);
-frame.setJMenuBar(menuBar);
-
-// Modify the button's action listener to support BetterDrag
-nextButton.addActionListener(new ActionListener() {
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        if (enableBetterDrag.isSelected()) {
-            for (int i = 0; i < 13; i++) {
-                System.out.println("BetterDrag click " + (i + 1));
-            }
-        } else {
-            JOptionPane.showMessageDialog(frame, "Next button clicked!");
-        }
-    }
-});
+// This code creates a simple GUI application with a button that allows the user to configure BetterDrag settings.
