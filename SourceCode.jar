@@ -56,3 +56,24 @@ public class BetterDrag {
         frame.setVisible(true);
     }
 }
+// Add a menu bar
+JMenuBar menuBar = new JMenuBar();
+JMenu optionsMenu = new JMenu("Options");
+JCheckBoxMenuItem enableBetterDrag = new JCheckBoxMenuItem("Enable BetterDrag");
+optionsMenu.add(enableBetterDrag);
+menuBar.add(optionsMenu);
+frame.setJMenuBar(menuBar);
+
+// Modify the button's action listener to support BetterDrag
+nextButton.addActionListener(new ActionListener() {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (enableBetterDrag.isSelected()) {
+            for (int i = 0; i < 13; i++) {
+                System.out.println("BetterDrag click " + (i + 1));
+            }
+        } else {
+            JOptionPane.showMessageDialog(frame, "Next button clicked!");
+        }
+    }
+});
