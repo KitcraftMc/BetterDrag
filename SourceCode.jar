@@ -1,16 +1,18 @@
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.AWTException;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.*;
 
 public class BetterDrag {
-    private static int singleClickMultiplier = 1; // Default clicks per single click
-    private static int multiClickMultiplier = 1; // Default activations for multi-clicker
-    private static int clicksPerSpot = 1; // Default clicks per spot in multi-clicker
-    private static boolean ctrlPressed = false; // Tracks if CTRL is pressed
-    private static final List<Point> clickPoints = new ArrayList<>(); // Stores points for multi-clicker
+
+    private static int singleClickMultiplier = 1;
+    private static int multiClickMultiplier = 1;
+    private static int clicksPerSpot = 1;
+    private static final List<Point> clickPoints = new ArrayList<>();
+    private static boolean ctrlPressed = false;
+    private static JDialog configDialog;
+    private static JDialog overlayDialog;
 
     public static void main(String[] args) {
         JFrame frame = new JFrame("BetterDrag");
@@ -20,23 +22,12 @@ public class BetterDrag {
 
         JMenuBar menuBar = new JMenuBar();
 
-        // Single Clicker Menu
-        JMenu singleClickMenu = new JMenu("Single Clicker");
-        JMenuItem configureSingleClick = new JMenuItem("Configure Single Click");
-        singleClickMenu.add(configureSingleClick);
+        // Configuration Menu
+        JMenu configMenu = new JMenu("Configuration");
+        JMenuItem configureSettings = new JMenuItem("Configure Settings");
+        configMenu.add(configureSettings);
 
-        // Separator between menus
-        menuBar.add(singleClickMenu);
-        menuBar.add(new JSeparator(JSeparator.VERTICAL));
-
-        // Multi-Clicker Menu
-        JMenu multiClickMenu = new JMenu("Multi-Clicker");
-        JMenuItem configureMultiClick = new JMenuItem("Configure Multi-Clicker");
-        JMenuItem clearPoints = new JMenuItem("Clear Points");
-        multiClickMenu.add(configureMultiClick);
-        multiClickMenu.add(clearPoints);
-
-        menuBar.add(multiClickMenu);
+        menuBar.add(configMenu);
         frame.setJMenuBar(menuBar);
 
         // Key listener for CTRL key detection
@@ -51,65 +42,179 @@ public class BetterDrag {
                 MouseEvent mouseEvent = (MouseEvent) event;
 
                 if (ctrlPressed && mouseEvent.getButton() == MouseEvent.BUTTON1) {
-                    // Add new click point for multi-clicker
                     Point newPoint = MouseInfo.getPointerInfo().getLocation();
                     clickPoints.add(newPoint);
                     System.out.println("Added point: " + newPoint);
                 } else if (!ctrlPressed && mouseEvent.getButton() == MouseEvent.BUTTON1) {
-                    // Trigger actions based on configuration
-                    new Thread(() -> simulateSingleClicks()).start();
-                    new Thread(() -> simulateMultiClicks()).start();
+                    new Thread(BetterDrag::simulateSingleClicks).start();
+                    new Thread(BetterDrag::simulateMultiClicks).start();
                 }
             }
         }, AWTEvent.MOUSE_EVENT_MASK);
 
-        configureSingleClick.addActionListener(e -> showSingleClickConfigurationDialog(frame));
-        configureMultiClick.addActionListener(e -> showMultiClickConfigurationDialog(frame));
-        clearPoints.addActionListener(e -> {
-            clickPoints.clear();
-            JOptionPane.showMessageDialog(frame, "All points cleared!");
-        });
+        configureSettings.addActionListener(e -> showCombinedConfigurationDialog(frame));
 
         frame.setVisible(true);
     }
 
-    private static void showSingleClickConfigurationDialog(JFrame parent) {
-        JDialog dialog = new JDialog(parent, "Single Click Configuration", true);
-        dialog.setSize(300, 150);
-        dialog.setLayout(new FlowLayout());
+    private static void showCombinedConfigurationDialog(JFrame parent) {
+        configDialog = new JDialog(parent, "Combined Configuration", true);
+        configDialog.setSize(300, 350); // Adjusted height
+        configDialog.setLayout(new BorderLayout());
 
-        JLabel label = new JLabel("Clicks per single left-click:");
-        JSpinner multiplierSpinner = new JSpinner(new SpinnerNumberModel(singleClickMultiplier, 1, 1000, 1));
+        // Panel for Single Clicker Configuration
+        JPanel singleClickPanel = new JPanel(new FlowLayout());
+        JLabel singleClickLabel = new JLabel("Clicks per single left-click:");
+        JSpinner singleClickSpinner = new JSpinner(new SpinnerNumberModel(singleClickMultiplier, 1, 1000, 1));
+        singleClickPanel.add(singleClickLabel);
+        singleClickPanel.add(singleClickSpinner);
 
-        JButton saveButton = new JButton("Save");
-        saveButton.addActionListener(e -> {
-            singleClickMultiplier = (Integer) multiplierSpinner.getValue();
-            JOptionPane.showMessageDialog(dialog,
-                "Configuration saved! Single left-click will now simulate " + singleClickMultiplier + " clicks.");
-            dialog.dispose();
+        // Horizontal Line Separator
+        JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
+
+        // Panel for Multi-Clicker Configuration
+        JPanel multiClickPanel = new JPanel(new GridLayout(2, 2));
+        JLabel clicksPerTriggerLabel = new JLabel("Clicks per trigger:");
+        JSpinner clicksPerTriggerSpinner = new JSpinner(new SpinnerNumberModel(multiClickMultiplier, 1, 1000, 1));
+        JLabel clicksPerSpotLabel = new JLabel("Clicks per spot:");
+        JSpinner clicksPerSpotSpinner = new JSpinner(new SpinnerNumberModel(clicksPerSpot, 1, 1000, 1));
+        multiClickPanel.add(clicksPerTriggerLabel);
+        multiClickPanel.add(clicksPerTriggerSpinner);
+        multiClickPanel.add(clicksPerSpotLabel);
+        multiClickPanel.add(clicksPerSpotSpinner);
+
+        // Save Button
+        JButton configurePointsButton = new JButton("Configure Click Points"); // Change button text
+        configurePointsButton.addActionListener(e -> {
+            singleClickMultiplier = (Integer) singleClickSpinner.getValue();
+            multiClickMultiplier = (Integer) clicksPerTriggerSpinner.getValue();
+            clicksPerSpot = (Integer) clicksPerSpotSpinner.getValue();
+
+            configDialog.dispose();
+            showPointSelectionOverlay(parent);
+
         });
 
-        dialog.add(label);
-        dialog.add(multiplierSpinner);
-        dialog.add(saveButton);
+        // Main Configuration Panel
+        JPanel configPanel = new JPanel();
+        configPanel.setLayout(new BoxLayout(configPanel, BoxLayout.Y_AXIS)); // Vertical layout
 
-        dialog.setVisible(true);
+        configPanel.add(singleClickPanel);
+        configPanel.add(separator);
+        configPanel.add(multiClickPanel);
+        configPanel.add(configurePointsButton);
+
+        configDialog.add(configPanel, BorderLayout.CENTER);
+
+        configDialog.setVisible(true);
     }
 
-    private static void showMultiClickConfigurationDialog(JFrame parent) {
-        JDialog dialog = new JDialog(parent, "Multi-Clicker Configuration", true);
-        dialog.setSize(350, 200);
-        dialog.setLayout(new GridLayout(4, 2));
+    private static void showPointSelectionOverlay(JFrame parent) {
+        overlayDialog = new JDialog(parent, "Click Spots and I'm Ready!", true) {
+            @Override
+            public void paint(Graphics g) {
+                super.paint(g);
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setColor(new Color(0, 0, 0, 100)); // Semi-transparent black
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+                g2d.dispose();
+            }
+        };
 
-        JSpinner activationsSpinner = new JSpinner(new SpinnerNumberModel(multiClickMultiplier, 1, 1000, 1));
-        JSpinner perSpotSpinner = new JSpinner(new SpinnerNumberModel(clicksPerSpot, 1, 1000, 1));
+        overlayDialog.setUndecorated(true);
+        overlayDialog.setBackground(new Color(0, 0, 0, 0));
+        overlayDialog.setSize(Toolkit.getDefaultToolkit().getScreenSize());
+        overlayDialog.setAlwaysOnTop(true);
 
-        dialog.add(new JLabel("Activations per trigger:"));
-        dialog.add(activationsSpinner);
-        dialog.add(new JLabel("Clicks per spot:"));
-        dialog.add(perSpotSpinner);
+        MouseAdapter mouseAdapter = new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                Point newPoint = e.getLocationOnScreen();
+                clickPoints.add(newPoint);
+                System.out.println("Added point: " + newPoint);
+            }
+        };
 
-        JButton saveButton = new JButton("Save");
-        
-		saveButton
+        overlayDialog.addMouseListener(mouseAdapter);
 
+        //Instead make it so the no button shows "im ready!" instead of the im ready button being on the bottom. and remove the no button
+	JButton configurePointsButton = new JButton("I'm Ready!"); // Change button text
+       configurePointsButton.addActionListener(e -> {
+            overlayDialog.dispose();
+        });
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(configurePointsButton);
+
+        overlayDialog.add(buttonPanel, BorderLayout.SOUTH);
+
+        overlayDialog.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                clickPoints.clear();  // Clear points if the dialog is closed without hitting "I'm ready!"
+                System.out.println("Overlay closed without saving.  Clearing click points.");
+            }
+        });
+
+        overlayDialog.setVisible(true);
+    }
+
+    private static void simulateSingleClicks() {
+        try {
+            Robot robot = new Robot();
+            for (int i = 0; i < singleClickMultiplier; i++) {
+                robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
+                robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+            }
+        } catch (AWTException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void simulateMultiClicks() {
+        if (clickPoints.isEmpty()) return;
+        try {
+            Robot robot = new Robot();
+            Point originalPosition = MouseInfo.getPointerInfo().getLocation();
+
+            for (int i = 0; i < multiClickMultiplier; i++) {
+                for (Point p : clickPoints) {
+                    robot.mouseMove(p.x, p.y);
+                    for (int j = 0; j < clicksPerSpot; j++) {
+                        robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
+                        robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+                    }
+                }
+            }
+            robot.mouseMove(originalPosition.x, originalPosition.y);
+        } catch (AWTException e) {
+            e.printStackTrace();
+        }
+    }
+}
+// This code is a Java Swing application that allows users to configure and simulate mouse clicks at specified screen locations.
+// It includes a configuration dialog for setting the number of clicks and an overlay for selecting click points. The application uses AWT for mouse event handling and Robot class for simulating clicks.
+// The main features include:
+// - Configuration of single and multi-click settings
+// - Selection of click points on the screen
+// - Simulation of clicks at the selected points
+// - Overlay dialog for point selection with a semi-transparent background
+// - Key listener for CTRL key detection to add points
+// - Mouse listener for handling click events and simulating clicks
+// - Proper disposal of dialogs and clearing of points when closed without saving
+// - Use of threads to handle click simulation without blocking the UI
+// - Customizable number of clicks per trigger and per spot
+// - Clear console output for added points and overlay closure
+// - Use of Java Swing components for a user-friendly interface
+// - Use of AWTEventListener for global mouse event handling
+// - Use of JSpinner for numeric input in the configuration dialog
+// - Use of JSeparator for visual separation between configuration sections
+// - Use of JPanel and BoxLayout for organizing components in the configuration dialog
+// - Use of GridLayout for organizing components in the multi-click configuration section
+// - Use of FlowLayout for organizing components in the single-click configuration section
+// - Use of JButton for action buttons in the configuration dialog and overlay
+// - Use of JLabel for labeling input fields in the configuration dialog
+// - Use of JDialog for creating modal dialogs for configuration and point selection
+// - Use of JFrame for the main application window
+// - Use of MouseInfo for getting the current mouse position
+// - Use of InputEvent for simulating mouse button presses and releases
